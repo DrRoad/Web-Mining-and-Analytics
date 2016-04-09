@@ -46,10 +46,14 @@ docs.transf <- tm_map(docs.transf,content_transformer(removePunctuation))
 #remove stopwords
 docs.transf <- tm_map(docs.transf,removeWords,stopwords("english"))
 
+getTransformations()
+
 #stem the docs
 #install.packages("SnowballC")
 library(SnowballC)
-docs.transf <- tm_map(docs.transf,stemDocument)
+
+#See what happens when you don't stem the docs
+#docs.transf <- tm_map(docs.transf,stemDocument)
 
 #Create the document term matrix
 dtm <- DocumentTermMatrix(docs.transf,control=list(minWordLength=2,
@@ -99,5 +103,65 @@ for (i in 101:200) {
 result
 
 #Determine knn accuracy
-accuracy <- nrow(result[which(result$Correct==TRUE),])/nrow(result)
-accuracy
+accuracy.5 <- nrow(result[which(result$Correct==TRUE),])/nrow(result)
+accuracy.5
+
+confusion.matrix.5 <- data.frame(
+  row.names = c("PredictedAth","PredictedSpa")
+)
+
+confusion.matrix.5$ActualAth <- c(
+  nrow(result[which(result$Predict=="ath"&result$Correct==TRUE),]),
+  nrow(result[which(result$Predict=="spa"&result$Correct==FALSE),])
+)
+
+confusion.matrix.5$ActualSpa <- c(
+  nrow(result[which(result$Predict=="spa"&result$Correct==TRUE),]),
+  nrow(result[which(result$Predict=="ath"&result$Correct==FALSE),])
+)
+
+confusion.matrix.5
+
+#Try with only 2 neighbors
+prob.test <- knn(dtm.train,dtm.test,tags,k=2,prob=TRUE)
+prob.test
+
+#display knn results as data frame
+a <- 1:length(prob.test)
+b <- levels(prob.test)[prob.test]
+c <- attributes(prob.test)$prob
+result <- data.frame(Doc=a,Predict=b,Prob=c,Correct=rep(TRUE,length(prob.test)))
+
+for (i in 1:100) {
+  if (result$Predict[i] == "spa") {
+    result$Correct[i] = FALSE
+  }
+}
+
+for (i in 101:200) {
+  if (result$Predict[i] == "ath") {
+    result$Correct[i] = FALSE
+  }
+}
+
+result
+
+#Determine knn accuracy
+accuracy.2 <- nrow(result[which(result$Correct==TRUE),])/nrow(result)
+accuracy.2
+
+confusion.matrix.2 <- data.frame(
+  row.names = c("PredictedAth","PredictedSpa")
+)
+
+confusion.matrix.2$ActualAth <- c(
+  nrow(result[which(result$Predict=="ath"&result$Correct==TRUE),]),
+  nrow(result[which(result$Predict=="spa"&result$Correct==FALSE),])
+)
+
+confusion.matrix.2$ActualSpa <- c(
+  nrow(result[which(result$Predict=="spa"&result$Correct==TRUE),]),
+  nrow(result[which(result$Predict=="ath"&result$Correct==FALSE),])
+)
+
+confusion.matrix.2
